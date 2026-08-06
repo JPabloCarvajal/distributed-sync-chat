@@ -9,7 +9,7 @@ ChatClient ya dejó el canal abierto y emparejado; aquí solo se pinta la
 ventana. En ningún caso se reutiliza una ventana/canal existente: cada
 apertura -por clic propio o por invitación- crea uno nuevo.
 """
-
+from src.ui.private_registry import privates
 from __future__ import annotations
 
 import threading
@@ -77,14 +77,17 @@ class GroupWindow:
         if not selection:
             return
         peer = self._users[selection[0]]
-        self._user_list.selection_clear(0, "end")  # sin esto, clickear dos veces seguidas el mismo usuario no dispara el evento
+        self._user_list.selection_clear(0, "end")
         if peer == self._client.username:
             return
+        if not privates.claim(peer):
+            return  # ya hay ventana abierta con él
 
         def open_channel() -> None:
             try:
                 channel = self._client.open_private(peer)
             except OSError as exc:
+                privates.release(peer)
                 self._root.after(0, lambda: messagebox.showerror("Error", str(exc)))
                 return
             self._root.after(0, lambda: PrivateWindow(self._root, self._client, peer, channel))
@@ -107,8 +110,12 @@ class GroupWindow:
         self._root.after(0, lambda: self._log.append(f"[ERROR] {msg.body}"))
 
     def _handle_open_private(self, peer: str, channel: Channel) -> None:
+        if not privates.claim(peer):
+            channel.close()  # ya tenemos ventana con él: este canal sobra
+            return
         self._root.after(0, lambda: PrivateWindow(self._root, self._client, peer, channel))
 
     def _on_close(self) -> None:
-        self._client.close()
-        self._root.destroy()
+        self._channel.close()
+        privates.release(self._peer)
+        self._window.destroy()

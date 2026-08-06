@@ -1,15 +1,31 @@
 package chat;
 
-import com.google.gson.Gson;
-import java.util.concurrent.Semaphore;
+import chat.server.ChatServer;
+import chat.server.ChatService;
+import chat.server.ClientRegistry;
+import chat.sync.CentralizedSequencer;
+import chat.sync.ISequencer;
 
+/**
+ * Cableado del servidor. Aquí se decide QUÉ implementación se inyecta;
+ * ninguna clase de abajo conoce a las otras por su tipo concreto.
+ */
 public class Main {
-    public static void main(String[] args) {
-        Gson gson = new Gson();
-        Semaphore turno = new Semaphore(1, true);
 
-        System.out.println("Java " + System.getProperty("java.version"));
-        System.out.println("Gson: " + gson.toJson(new int[]{1, 2, 3}));
-        System.out.println("Semaforo justo: " + turno.isFair());
+    private static final int PORT = 1802;
+
+    public static void main(String[] args) throws Exception {
+
+        // 1. El coordinador: exclusión mutua sobre el orden (§6.3.2)
+        ISequencer coordinator = new CentralizedSequencer();
+
+        // 2. El registro de canales abiertos
+        ClientRegistry registry = new ClientRegistry();
+
+        // 3. La lógica: decide destinatarios, delega el orden
+        ChatService service = new ChatService(registry, coordinator);
+
+        // 4. El transporte: acepta conexiones y lanza hilos
+        new ChatServer(PORT, service).start();
     }
-}
+}   

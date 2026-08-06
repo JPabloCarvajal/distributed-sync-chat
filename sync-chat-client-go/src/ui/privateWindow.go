@@ -54,6 +54,9 @@ func ShowPrivateWindow(a fyne.App, c *client.ChatClient, peer string, ch *client
 	bottom := container.NewBorder(nil, nil, nil, send, input)
 
 	w.SetContent(container.NewBorder(title, bottom, nil, nil, log.view))
-	w.SetOnClosed(ch.Close)
+	w.SetOnClosed(func() {
+		ch.Close()
+		privates.release(peer)
+	})
 	w.Show()
 }
