@@ -1,1 +1,11 @@
 /home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/Main.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/model/Json.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/model/Message.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/model/MessageType.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/server/ChatServer.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/server/ChatService.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/server/ClientRegistry.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/server/ClientSession.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/server/IChatService.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/sync/CentralizedSequencer.java
+/home/panconquez0/Desktop/distributed-sync-chat/sync-chat-server/src/main/java/chat/sync/ISequencer.java

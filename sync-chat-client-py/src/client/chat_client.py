@@ -24,6 +24,7 @@ class ChatClient:
         self._address = ""
         self.username = ""
         self._group: Optional[Channel] = None
+        self._last_users: list[str] | None = None
 
         self._lock = threading.Lock()
         self._group_handlers: list[Callable[[Message], None]] = []
@@ -63,8 +64,14 @@ class ChatClient:
             self._group_handlers.append(handler)
 
     def on_users(self, handler: Callable[[list[str]], None]) -> None:
+        """Si el USERS ya llegó antes de registrarse (carrera de arranque),
+        se reproduce el último conocido."""
         with self._lock:
             self._users_handlers.append(handler)
+            last = self._last_users
+
+        if last is not None:
+            handler(last)
 
     def on_error(self, handler: Callable[[Message], None]) -> None:
         with self._lock:
@@ -87,7 +94,10 @@ class ChatClient:
             if msg.type == Type.GROUP:
                 self._notify(self._group_handlers, msg)
             elif msg.type == Type.USERS:
-                self._notify(self._users_handlers, msg.users or [])
+                users = msg.users or []
+                with self._lock:
+                    self._last_users = users
+                self._notify(self._users_handlers, users)   
             elif msg.type == Type.OPEN_PRIVATE:
                 # en hilo aparte: abrir el socket privado implica un connect
                 # (bloqueante) y no puede frenar la lectura del canal grupal.
@@ -98,7 +108,10 @@ class ChatClient:
                 self._notify(self._error_handlers, msg)
 
     def _handle_open_private(self, peer: str) -> None:
-        channel = self.open_private(peer)
+        try:
+            channel = self.open_private(peer)
+        except OSError:
+            return
         self._notify(self._open_private_handlers, peer, channel)
 
     def _notify(self, handlers: list[Callable], *args) -> None:

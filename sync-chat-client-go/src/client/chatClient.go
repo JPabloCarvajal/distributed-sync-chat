@@ -26,6 +26,7 @@ type ChatClient struct {
 	usersHandlers       []func([]string)
 	errorHandlers       []func(model.Message)
 	openPrivateHandlers []func(peer string, ch *Channel)
+	lastUsers           []string // último USERS recibido, para reproducirlo
 }
 
 func NewChatClient() *ChatClient {
@@ -84,10 +85,17 @@ func (c *ChatClient) OnGroupMessage(h func(model.Message)) {
 }
 
 // OnUsers registra un handler para la lista de usuarios conectados.
+// Si el USERS ya llegó antes de registrarse (carrera de arranque), se
+// reproduce el último conocido.
 func (c *ChatClient) OnUsers(h func([]string)) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.usersHandlers = append(c.usersHandlers, h)
+	last := c.lastUsers
+	c.mu.Unlock()
+
+	if last != nil {
+		go h(last) // en goroutine: el handler llama a fyne.Do
+	}
 }
 
 // OnError registra un handler para ERROR llegado por el canal grupal.
@@ -152,6 +160,7 @@ func (c *ChatClient) notifyGroup(msg model.Message) {
 
 func (c *ChatClient) notifyUsers(users []string) {
 	c.mu.Lock()
+	c.lastUsers = users
 	handlers := append([]func([]string){}, c.usersHandlers...)
 	c.mu.Unlock()
 

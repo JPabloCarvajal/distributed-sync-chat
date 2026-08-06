@@ -38,14 +38,18 @@ func ShowGroupWindow(a fyne.App, c *client.ChatClient) {
 	)
 	userList.OnSelected = func(id widget.ListItemID) {
 		peer := users[id]
-		userList.UnselectAll() // sin esto, clickear dos veces seguidas el mismo usuario no dispara OnSelected
+		userList.UnselectAll()
 		if peer == c.Username() {
 			return
+		}
+		if !privates.claim(peer) {
+			return // ya hay ventana abierta con él
 		}
 
 		go func() {
 			ch, err := c.OpenPrivate(peer)
 			if err != nil {
+				privates.release(peer)
 				fyne.Do(func() { dialog.ShowError(err, w) })
 				return
 			}
@@ -67,7 +71,7 @@ func ShowGroupWindow(a fyne.App, c *client.ChatClient) {
 
 	c.OnGroupMessage(func(msg model.Message) {
 		fyne.Do(func() {
-			log.append(fmt.Sprintf("%s: %s", msg.From, msg.Body))
+			log.append(fmt.Sprintf("[%d] %s: %s", msg.Seq, msg.From, msg.Body))
 		})
 	})
 
@@ -87,6 +91,10 @@ func ShowGroupWindow(a fyne.App, c *client.ChatClient) {
 	// Flujo C, paso 2: alguien más quiere hablar conmigo. ChatClient ya
 	// hizo el JOIN de emparejamiento; aquí solo abrimos la ventana.
 	c.OnOpenPrivate(func(peer string, ch *client.Channel) {
+		if !privates.claim(peer) {
+			ch.Close() // ya tenemos ventana con él: este canal sobra
+			return
+		}
 		fyne.Do(func() { ShowPrivateWindow(a, c, peer, ch) })
 	})
 
@@ -98,6 +106,6 @@ func ShowGroupWindow(a fyne.App, c *client.ChatClient) {
 	bottom := container.NewBorder(nil, nil, nil, send, input)
 
 	w.SetContent(container.NewBorder(title, bottom, nil, nil, center))
-	w.SetOnClosed(c.Close)
+
 	w.Show()
 }
