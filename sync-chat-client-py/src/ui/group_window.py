@@ -9,7 +9,6 @@ ChatClient ya dejó el canal abierto y emparejado; aquí solo se pinta la
 ventana. En ningún caso se reutiliza una ventana/canal existente: cada
 apertura -por clic propio o por invitación- crea uno nuevo.
 """
-from src.ui.private_registry import privates
 from __future__ import annotations
 
 import threading
@@ -20,6 +19,7 @@ from src.client.chat_client import ChatClient
 from src.client.proxy import Channel
 from src.model.message import Message
 from src.ui.chat_log import ChatLog
+from src.ui.private_registry import privates
 from src.ui.private_window import PrivateWindow
 
 
@@ -116,6 +116,5 @@ class GroupWindow:
         self._root.after(0, lambda: PrivateWindow(self._root, self._client, peer, channel))
 
     def _on_close(self) -> None:
-        self._channel.close()
-        privates.release(self._peer)
-        self._window.destroy()
+        self._client.close()
+        self._root.destroy()

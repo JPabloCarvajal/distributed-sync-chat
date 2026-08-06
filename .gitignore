@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Go build output
+sync-chat-client-go/chat-client
+
+# Archivos comprimidos de respaldo (no deben ir al repo)
+*.zip
