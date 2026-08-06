@@ -40,8 +40,8 @@ func (c *ChatClient) Username() string {
 // hasta Close(). Guarda la dirección porque cada privado abre OTRO socket
 // contra el mismo servidor.
 func (c *ChatClient) Connect(address, username string) error {
-	ch, err := Dial(address)
-	if err != nil {
+	ch := NewChannel(address)
+	if err := ch.Open(); err != nil {
 		return err
 	}
 	if err := ch.Send(model.Message{Type: model.TypeJoin, From: username}); err != nil {
@@ -65,8 +65,8 @@ func (c *ChatClient) SendGroup(body string) error {
 // Lo usa la UI en los dos lados del flujo C: cuando el usuario local hace
 // clic sobre alguien (inicia), y cuando llega un OPEN_PRIVATE (responde).
 func (c *ChatClient) OpenPrivate(peer string) (*Channel, error) {
-	ch, err := Dial(c.address)
-	if err != nil {
+	ch := NewChannel(c.address)
+	if err := ch.Open(); err != nil {
 		return nil, err
 	}
 	if err := ch.Send(model.Message{Type: model.TypeJoin, From: c.username, To: peer}); err != nil {
