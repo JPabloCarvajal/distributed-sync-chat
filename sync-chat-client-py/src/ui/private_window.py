@@ -15,6 +15,7 @@ from src.client.chat_client import ChatClient
 from src.client.proxy import Channel
 from src.model.message import Message, Type
 from src.ui.chat_log import ChatLog
+from src.ui.private_registry import privates
 
 
 class PrivateWindow:
@@ -73,4 +74,5 @@ class PrivateWindow:
 
     def _on_close(self) -> None:
         self._channel.close()
+        privates.release(self._peer)
         self._window.destroy()
